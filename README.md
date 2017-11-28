@@ -39,3 +39,9 @@ A disconnected client (a client that cannot access any storage servers) can
 only make progress within those realms. It can no longer read or write other
 realms. A client that can access any single storage server can continue
 to make progress across all realms.
+
+# Algorithm Notes
+
+Transaction record lists read dependencies ("locks").
+
+Use LWT to elect a majority coordinator. Only that node updates transaction history.
