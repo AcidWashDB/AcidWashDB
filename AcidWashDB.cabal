@@ -17,13 +17,17 @@ library
   hs-source-dirs:      src
   exposed-modules:     Lib
   build-depends:       base >= 4.7 && < 5
+                     , protolude
+  default-extensions:  NoImplicitPrelude
   default-language:    Haskell2010
 
 executable royal-exe
   hs-source-dirs:      royal
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-extensions:  NoImplicitPrelude
   build-depends:       base
+                     , protolude
                      , AcidWashDB
   default-language:    Haskell2010
 
@@ -32,9 +36,11 @@ test-suite royal-test
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
+                     , protolude
                      , AcidWashDB
                      , hspec
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-extensions:  NoImplicitPrelude
   default-language:    Haskell2010
 
 source-repository head
