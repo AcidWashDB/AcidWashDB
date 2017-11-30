@@ -40,8 +40,23 @@ only make progress within those realms. It can no longer read or write other
 realms. A client that can access any single storage server can continue
 to make progress across all realms.
 
-# Algorithm Notes
+# Design Notes
+
+The user's AcidWash data model is not reflected directly in ScyllaDB schemas.
+Rather, AcidWash treats ScyllaDB as an underlying, primitive persistence engine.
+
+An AcidWash client connects to a "steward" service. The stewards in an AcidWash
+cluster are interchangeable except for performance differences due to network
+proximity. Stewards do not access ScyllaDB directly; instead, they connect
+with "royal" services through ZeroMQ. Each steward maintains contact with as
+many royals as it is able to reach at any given time.
+
+The stewards and royals collaborate through LWT transactions to crown a "king"
+of each active realm. Each king holds the throne for a specific
+transaction-timestamp interval, typically O(1 second). (Everyone should be king
+for a second.) The steward routes each realm-specific operation to the king of
+that realm. To execute an operation when there is no current king,  a new king
+is crowned. For a configured interval after a king was active (probably O(10)
+seconds), the most recent king tries hardest to be the new king.
 
 Transaction record lists read dependencies ("locks").
-
-Use LWT to elect a majority coordinator. Only that node updates transaction history.
