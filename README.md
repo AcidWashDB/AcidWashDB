@@ -118,6 +118,8 @@ transaction-timestamp interval, typically O(1 second). (Everyone should be king
 for a second.) The steward routes each realm-specific operation to the king of
 that realm. To execute an operation when there is no current king,  a new king
 is crowned. For a configured interval after a king was active (probably O(10)
-seconds), the most recent king is the fierst choice of new king.
+seconds), the most recent king is the preferred new king. If a new king is
+needed after that interval elapses, the royal with the fastest network
+connectivity to the requesting steward is the preferred new king.
 
 Each transaction record specifies the version of the database that was read when executing that transaction and all data rows that were examined during transaction execution. This information is used for determining when transactions cannot be added to the authoritative history because of serializability conflicts.
