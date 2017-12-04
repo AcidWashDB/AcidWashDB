@@ -70,7 +70,7 @@ in ways that are backward-compatible in two senses:
 * Clients that were written against older versions of the schema must
   see new rows as valid data, whether or not those clients are recompiled
   with new versions of the schema. This is backward compatibility
-  [as defined by Cap'n Proto](https://capnproto.org/language.html#evolving-your-protocol)
+  [as defined by Cap'n Proto](https://capnproto.org/language.html#evolving-your-protocol).
 
 * Clients that are written against newer versions of the schema must see
   old rows as valid data. This places the following additional requirements
@@ -87,15 +87,15 @@ For some platforms, AcidWash packages are available that manage client working
 state in a relational database, with the relational schema being a simple
 transformation of the AcidWash schema. Client software must still perform
 inserts and updates through the AcidWash client API, but can perform reads
-directly from the SQL database and (if supported by the SQL platform) can
-register with the SQL database for change notification.
+directly from the SQL database and (if supported by the SQL engine) can
+register with the SQL engine for change notification.
 
 The following platforms are priorities for implementing this functionality:
 
 * browser-side JavaScript
 
 * a Rust server (intended for replicating an entire AcidWash database in a SQL
-  database like RedShift for analytics.)
+  database like RedShift for analytics)
 
 * iOS Core Data
 
