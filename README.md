@@ -38,12 +38,10 @@ AcidWash's "eventually ACID" consistency model makes the following guarantees:
 
 * Database: a configuration and naming domain within a cluster.
 
-* Realm: a logical database partition, the unit of horizontal scaling, and the
+* Realm: a logical database partition -- the unit of horizontal scaling and the
   unit of data replication to clients. A realm is intended to be a cohesive set
   of data associated with a real-world entity, such as a user or a customer
   organization.
-
-  Joins and ACID transactions are supported only within realms.
 
   Each client replica of a given database subscribes to a list of realms. A
   disconnected client (a client that cannot access any storage servers) can only
