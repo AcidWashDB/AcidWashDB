@@ -43,6 +43,10 @@ AcidWash's "eventually ACID" consistency model makes the following guarantees:
   of data associated with a real-world entity, such as a user or a customer
   organization.
 
+  Transactions within a realm are cheap, but cross-realm transactions
+  have additional cost and latency comparable to
+  (the cost of a small single-realm transaction) * (the number of realms involved).
+
   Each client replica of a given database subscribes to a list of realms. A
   disconnected client (a client that cannot access any storage servers) can only
   make progress within those realms. It can no longer read or write other
@@ -97,12 +101,16 @@ The following platforms are priorities for implementing this functionality:
 
 * iOS Core Data
 
-# Design Notes
+## Design Notes
+
+### Relationship Between AcidWash Data Model and Underlying ScyllaDB
 
 AcidWash uses [ScyllaDB](http://www.scylladb.com/) as an underlying, primitive
 persistence engine. The user's AcidWash data model is not reflected directly as
 a Scylla data model. Rather, AcidWash supports its user-facing functionality
 through its own use of Scylla.
+
+### Node Types and Coordination
 
 An AcidWash client connects to a "steward" service. The stewards in an AcidWash
 cluster are interchangeable except for performance differences due to network
@@ -120,4 +128,75 @@ seconds), the most recent king is the preferred new king. If a new king is
 needed after that interval elapses, the royal with the fastest network
 connectivity to the requesting steward is the preferred new king.
 
-Each transaction record specifies the version of the database that was read when executing that transaction and all data rows that were examined during transaction execution. This information is used for determining when transactions cannot be added to the authoritative history because of serializability conflicts.
+### Transactions
+
+AcidWash maintains a transaction "log" in Scylla for each realm of each database.
+
+#### Committing Single-Realm Transactions
+
+The king of a realm attempts to commit a single-realm transaction as follows:
+
+* Check in the transaction log whether any of the rows read, gaps observed,
+  or rows modified by the transaction changed since the realm version that was
+  used as input for the transaction. If so, process the transaction as a
+  roll-back.
+
+* Durably insert a transaction record, which contains the following
+  * a transaction id (a timestamp plus a UUID)
+  * the client id of the originating client (a UUID)
+  * a transaction description domain identifier (a UUID)
+  * a transaction description (a blob that is only meaningful to clients
+    who understand the description domain)
+  * the transaction id of the rolled-back transaction (if any)
+    that this transaction is replacing
+  * the transaction state: committed & updates not yet performed
+  * the last transaction id of the realm version that was used as input for this
+    transaction (must be a committed transaction)
+  * the realm version that will result from this transaction
+  * a list of all rows read and gaps observed by the transaction
+  * and a list of all (row, column)s modified and inserted by the transaction,
+    with old and new values
+
+* Write new values to all updated (row, column)s.
+
+* Mark the transaction log record as committed.
+
+#### Rolling Back a Single-Realm Transactions
+
+When a single-realm transaction rolls back, nothing has yet been persisted.
+Instead of writing the transaction record to the transaction log, the king
+writes it to a roll-back log. When (if) the king is next able to communicate
+with the originating client, the king will inform that client that the
+transaction was rolled back. The client may choose to originate a new
+transaction to replace it.
+
+If the originating client does not replace the transaction within a
+configurable interval, the king will begin reporting the rolled-back
+transaction to all clients who understand that description domain, to
+give them an opportunity to replace it.
+
+The king will only implement one replacement transaction for a given
+rolled-back transaction.
+
+### Committing a Multi-Realm Transaction
+
+A multi-realm transaction is implemented as two-phase commit across the
+transaction logs of affected realms:
+
+* The steward chooses one of the affected realms at random as the coordinator.
+  That realm's king becomes the "coordinating king".
+
+* The coordinating king processes the portion of the transaction that affects
+  its own realm, as described above for *Committing a Single-Realm Transaction*,
+  except that new values for modified/inserted rows are not yet written and the
+  resulting transaction state is prepared. If this portion of the transaction
+  rolls back, the whole transaction roles back.
+
+* The coordinating king then works with the kings of the other affected
+  realms to process their transactions into a prepared state (or roll back).
+
+* Once all affected realms are prepared, the coordinating king moves its own
+  transaction state to committed as coordinator.
+
+* Then the coordinating king works with the kings of the other affected realms
+  to move their transactions to the committed state.
