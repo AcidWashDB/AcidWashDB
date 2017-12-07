@@ -1,0 +1,6 @@
+[package]
+name = "acidwash"
+version = "0.1.0"
+authors = ["deansher <deansherthompson@gmail.com>"]
+
+[dependencies]
