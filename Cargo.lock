@@ -1,4 +1,11 @@
 [[package]]
 name = "acidwash"
 version = "0.1.0"
+dependencies = [
+ "acidwash_rocks 0.1.0",
+]
+
+[[package]]
+name = "acidwash_rocks"
+version = "0.1.0"
 

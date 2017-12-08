@@ -1,7 +1,6 @@
 [package]
-name = "acidwash"
+name = "acidwash_rocks"
 version = "0.1.0"
 authors = ["deansher <deansherthompson@gmail.com>"]
 
 [dependencies]
-acidwash_rocks = { path = "acidwash_rocks" }
