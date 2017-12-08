@@ -1,5 +1,5 @@
 [package]
-name = "acidwash_rocks"
+name = "acidwash_memstore"
 version = "0.1.0"
 authors = ["deansher <deansherthompson@gmail.com>"]
 
